@@ -77,9 +77,10 @@ fi
 SYSTEM_DS_PATH=$(dirname ${SRC_PATH})
 IMAGE_DS_PATH=$(dirname ${DISK_SRC})
 
+SYSTEM_DS_DISK_PATH="${SYSTEM_DS_PATH}/disk.${DISK_ID}"
 
 if [ "$CLONE" = "YES" ]; then
-    DISK_PATH="${SYSTEM_DS_PATH}/disk.${DISK_ID}"
+    DISK_PATH="${SYSTEM_DS_DISK_PATH}"
     DISK_PATH_ORIG="${DISK_PATH}.orig"
 else
     DISK_PATH=$DISK_SRC
@@ -134,7 +135,6 @@ DOC="$DOC
   </disks>
 </domainsnapshot>"
 
-
 CMD=$(cat <<EOT
 set -ex
 
@@ -143,7 +143,7 @@ if [ ! -d "${SNAP_DIR}" ]; then
 fi
 
 # 57 is DISK_SNAPSHOT. When the snapshot is done with the VM in running state
-if [ "$LCM_STATE" = "57" ]; then
+if [ "$LCM_STATE" = "57" ] && [ "$VMMMAD" = "kvm" ] ; then
     # The file must be created beforehand or libvirt complains with
     # "permission denied"
     touch $SNAP_PATH
@@ -153,9 +153,9 @@ if [ "$LCM_STATE" = "57" ]; then
     echo -e "$DOC" > \$FILENAME
 
     virsh -c qemu:///system snapshot-create one-$VMID --disk-only --atomic \
-        --xmlfile \$FILENAME
+        --xmlfile \$FILENAME --quiesce
 
-    ln -sf $SNAP_PATH $CURRENT_PATH
+    ln -sf $SNAP_PATH $SYSTEM_DS_DISK_PATH
 
     rm \$FILENAME
 else
@@ -166,14 +166,18 @@ else
     fi
 
     qemu-img create -f qcow2 -b "\${ORIG}" "${SNAP_PATH}"
-    ln -sf $SNAP_PATH $CURRENT_PATH
+    ln -sf $SNAP_PATH $SYSTEM_DS_DISK_PATH
 fi
 
-# The first snapshot disk must change its backing file as by default
-if [ "$SNAP_ID" = "1" ]; then
+if [ "$SNAP_ID" = "1" ] && [ "$CLONE" != "YES" ]; then
     ln -sf "${DISK_PATH_ORIG}" "${SNAP_DIR}/0"
+fi
 
-    REAL_BACKING_FILE="${SNAP_DIR}/0"
+BACKING_FILE=\$(qemu-img info ${SNAP_PATH} | grep '^backing file:' | \
+    cut -d: -f2 | sed 's/^ //')
+
+if [ "\${BACKING_FILE}" = "${SYSTEM_DS_DISK_PATH}" ]; then
+    REAL_BACKING_FILE="${DISK_PATH_ORIG}"
     qemu-img rebase -u -b "\${REAL_BACKING_FILE}" "${SNAP_PATH}"
 fi
 EOT
