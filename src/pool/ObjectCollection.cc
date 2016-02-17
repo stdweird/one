@@ -105,3 +105,37 @@ int ObjectCollection::del_collection_id(int id)
     return 0;
 };
 
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+int ObjectCollection::first(int& elem)
+{
+    if (collection_set.empty())
+    {
+        return -1;
+    }
+
+    set<int>::iterator it = collection_set.begin();
+
+    elem = *it;
+
+    collection_set.erase(it);
+
+    return 0;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+ObjectCollection& ObjectCollection::operator<<(const ObjectCollection& r)
+{
+    set<int>::const_iterator i;
+
+    for (i = r.collection_set.begin(); i != r.collection_set.end(); ++i)
+    {
+        collection_set.insert(*i);
+    }
+
+    return *this;
+}

@@ -52,6 +52,14 @@ public:
     int del_collection_id(int id);
 
     /**
+     *  Deletes all IDs from the set.
+     */
+    void clear_collection()
+    {
+        collection_set.clear();
+    }
+
+    /**
      *  Returns how many IDs are there in the set.
      *    @return how many IDs are there in the set.
      */
@@ -94,6 +102,19 @@ public:
     {
         return collection_set.count(id) > 0;
     }
+
+    /**
+     *  Returns and deletes the first element from the set
+     *    @param the element
+     *    @return 0 on success -1 if the set was empty
+     */
+    int first(int& elem);
+
+    /**
+     * Adds to the collection the contents of other collection
+     *
+     */
+    ObjectCollection& operator<<(const ObjectCollection& r);
 
 private:
 

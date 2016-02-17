@@ -124,17 +124,20 @@ class VmmAction
     #  - :fail_action steps to be executed if steps fail
     #  - :stdin for the action
     #  @param [Array] of steps
-    def run(steps, info_on_success = nil)
+    def run(steps, extra_info = nil)
         result = execute_steps(steps)
 
         @ssh_src.close if @ssh_src
         @ssh_dst.close if @ssh_dst
 
         #Prepare the info for the OpenNebula core
+        #
+        info = extra_info || ""
+
         if DriverExecHelper.failed?(result)
-            info = @data[:failed_info]
+            info << @data[:failed_info]
         else
-            info = @data["#{@main_action.to_s}_info".to_sym]
+            info << @data["#{@main_action.to_s}_info".to_sym]
         end
 
         @vmm.send_message(VirtualMachineDriver::ACTION[@main_action],
@@ -1085,6 +1088,27 @@ class ExecDriver < VirtualMachineDriver
         end
 
         action.run(steps)
+    end
+
+    #
+    # UPDATESG action, deletes iptables rules and regenerate them
+    #
+    def update_sg(id, drv_message)
+        xml_data = decode(drv_message)
+        sg_id    = xml_data.elements['SECURITY_GROUP_ID'].text
+
+        action = VmmAction.new(self, id, :update_sg, drv_message)
+
+        steps=[
+            # Execute update networking action
+            {
+                :driver       => :vnm,
+                :action       => :update,
+                :parameters   => [:deploy_id],
+            }
+        ]
+
+        action.run(steps, sg_id)
     end
 
 private

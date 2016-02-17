@@ -205,6 +205,10 @@ void VirtualMachineManager::trigger(Actions action, int _vid)
         aname = "DISK_SNAPSHOT_REVERT";
         break;
 
+    case UPDATESG:
+        aname = "UPDATESG";
+        break;
+
     default:
         delete vid;
         return;
@@ -327,6 +331,10 @@ void VirtualMachineManager::do_action(const string &action, void * arg)
     else if (action == "DISK_SNAPSHOT_REVERT")
     {
         disk_snapshot_revert_action(vid);
+    }
+    else if (action == "UPDATESG")
+    {
+        updatesg_action(vid);
     }
     else if (action == ACTION_TIMER)
     {
@@ -2490,6 +2498,79 @@ error_common:
     vm->unlock();
     return;
 }
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void VirtualMachineManager::updatesg_action(int vid)
+{
+    VirtualMachine *                    vm;
+    const VirtualMachineManagerDriver * vmd;
+
+    string        vm_tmpl;
+    string *      drv_msg;
+    ostringstream os;
+
+    // Get the VM from the pool
+    vm = vmpool->get(vid,true);
+
+    if (vm == 0)
+    {
+        return;
+    }
+
+    if (!vm->hasHistory())
+    {
+        goto error_history;
+    }
+
+    // Get the driver for this VM
+    vmd = get(vm->get_vmm_mad());
+
+    if ( vmd == 0 )
+    {
+        goto error_driver;
+    }
+
+    // Invoke driver method
+    drv_msg = format_message(
+        vm->get_hostname(),
+        vm->get_vnm_mad(),
+        "",
+        "",
+        vm->get_deploy_id(),
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        vm->to_xml(vm_tmpl));
+
+    vmd->updatesg(vid, *drv_msg);
+
+    delete drv_msg;
+
+    vm->unlock();
+
+    return;
+
+error_history:
+    os.str("");
+    os << "updatesg_action, VM has no history";
+    goto error_common;
+
+error_driver:
+    os.str("");
+    os << "updatesg_action, error getting driver " << vm->get_vmm_mad();
+
+error_common:
+    vm->log("VMM", Log::ERROR, os);
+    vm->unlock();
+
+    return;
+}
+
 
 /* ************************************************************************** */
 /* MAD Loading                                                                */

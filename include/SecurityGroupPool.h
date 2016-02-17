@@ -115,6 +115,26 @@ public:
         return PoolSQL::dump(oss, "SECURITY_GROUP_POOL", SecurityGroup::table, where, limit);
     };
 
+    /**
+     *  Updates the VM sets of outdated and updating VMs during a SG update process
+     *
+     */
+/**    void sg_update_vm(int sg_id, int vm_id, bool result)
+    {
+        SecurityGroup * sg = get (sg_id, true);
+
+        if (sg == 0)
+        {
+            return;
+        }
+
+        sg->update_vm(vm_id, result);
+
+        update(sg);
+
+        sg->unlock();
+    }
+*/
 private:
 
     /**

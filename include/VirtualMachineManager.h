@@ -69,7 +69,8 @@ public:
         SNAPSHOT_REVERT,
         SNAPSHOT_DELETE,
         DISK_SNAPSHOT_CREATE,
-        DISK_SNAPSHOT_REVERT
+        DISK_SNAPSHOT_REVERT,
+        UPDATESG
     };
 
     /**
@@ -400,6 +401,13 @@ private:
      * @param vid the id of the VM.
      */
     void disk_snapshot_revert_action(int vid);
+
+    /**
+     * Updates firewall rules of a VM
+     *
+     * @param vid the id of the VM.
+     */
+    void updatesg(int vid);
 
     /**
      *  This function cancels the current driver operation

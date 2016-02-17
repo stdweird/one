@@ -89,6 +89,11 @@ public:
     }
 
     /**
+     *  Updates the outdated and updating sets
+     */
+    //void update_vm(int vm_id, bool result);
+
+    /**
      * Returns a group of Vector Attributes, in the form
      *  SECURITY_GROUP_RULE = [ SECURITY_GROUP_ID = oid, ... ]
      *
@@ -98,6 +103,43 @@ public:
      */
      void get_rules(vector<VectorAttribute*>& result) const;
 
+     /**
+      * Commit SG changes to associated VMs
+      *   @param recover, if true It will propagate the changes to VMs in error
+      *   and those being updated. Otherwise all VMs associated with the SG will
+      *   be updated
+      */
+    void commit(bool recover)
+    {
+        if (!recover)
+        {
+            outdated << vm_collection;
+            vm_collection.clear_collection();
+        }
+
+        outdated << updating << error;
+
+        updating.clear_collection();
+        error.clear_collection();
+    };
+
+    /**
+     *  Functions to manipulate the vm collection id's
+     */
+    int get_outdated(int& id)
+    {
+        return outdated.first(id);
+    }
+
+    void add_updating(int id)
+    {
+        updating.add_collection_id(id);
+    }
+
+    void add_error(int id)
+    {
+        updating.add_collection_id(id);
+    }
 private:
 
     // -------------------------------------------------------------------------
@@ -194,6 +236,18 @@ private:
      *  Stores a collection with the VMs using the security group
      */
     ObjectCollection vm_collection;
+
+    /**
+     *  These collections manages the update process of a Security Group
+     *    - outdated VMs with a previous version of the security group
+     *    - updating VMs being updated, action sent to the drivers
+     *    - error VMs that fail to update because of a wrong state or driver error
+     */
+    ObjectCollection outdated;
+
+    ObjectCollection updating;
+
+    ObjectCollection error;
 };
 
 #endif /*SECURITYGROUP_H_*/

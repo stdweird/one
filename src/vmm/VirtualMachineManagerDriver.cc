@@ -577,6 +577,33 @@ void VirtualMachineManagerDriver::protocol(const string& message) const
             lcm->trigger(LifeCycleManager::CLEANUP_FAILURE, id);
         }
     }
+    else if ( action == "UPDATESG" )
+    {
+        int sg_id;
+
+        Nebula &ne = Nebula::instance();
+        SecurityGroupPool *sgpool = ne.get_secgrouppool();
+
+        is >> sg_id >> ws;
+
+        if ( result == "SUCCESS" )
+        {
+            vm->log("VMM", Log::INFO, "VM security group successfully updated.");
+
+            return;
+        }
+        else
+        {
+            log_error(vm, os, is, "Error cleaning Host");
+            vmpool->update(vm);
+        }
+
+        vm->unlock();
+
+        //sgpool->sg_update_vm(sg_id, id, true);
+
+        return;
+    }
     else if ( action == "POLL" )
     {
         if (result == "SUCCESS")

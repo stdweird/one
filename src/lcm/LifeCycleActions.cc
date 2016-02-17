@@ -1523,3 +1523,71 @@ void LifeCycleManager::retry(VirtualMachine * vm)
 
     return;
 }
+
+/*  -------------------------------------------------------------------------- */
+/*  -------------------------------------------------------------------------- */
+
+void  LifeCycleManager::updatesg_action(int sgid)
+{
+    VirtualMachine * vm;
+    SecurityGroup  * sg;
+
+    int  vmid;
+    bool is_error;
+    bool end = false;
+
+    do
+    {
+        sg = sgpool->get(sgid, true);
+
+        if ( sg == 0 )
+        {
+            return;
+        }
+
+        if (sg->get_outdated(vmid) != 0)
+        {
+            sgpool->update(sg);
+            sg->unlock();
+
+            return;
+        }
+
+        sg->unlock();
+
+        vm = vmpool->get(vmid, true);
+
+        if ( vm == 0 )
+        {
+            continue;
+        }
+
+        //TODO FIX STATES
+        is_error = vm->get_state() == VirtualMachine::INIT;
+
+        vm->unlock();
+
+        sg = sgpool->get(sgid, true);
+
+        if ( sg == 0 )
+        {
+            return;
+        }
+
+        if ( is_error )
+        {
+            sg->add_error(vmid);
+
+        }
+        else
+        {
+            end = true;
+            sg->add_updating(vmid);
+            vmm->trigger(VirtualMachineManager::UPDATESG, vmid);
+       }
+
+        sgpool->update(sg);
+
+        sg->unlock();
+    } while (!end);
+}

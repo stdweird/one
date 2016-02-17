@@ -387,6 +387,19 @@ private:
     }
 
     /**
+     *  Sends a request to update the VM security groups:
+     *  "UPDATESG ID XML_DRV_MSG"
+     *    @param oid the virtual machine id.
+     *    @param drv_msg xml data for the mad operation
+     */
+    void update_sg (
+        const int     oid,
+        const string& drv_msg) const
+    {
+        write_drv("UPDATESG", oid, drv_msg);
+    }
+
+    /**
      *
      */
     void write_drv(const char * aname, const int oid, const string& msg) const
