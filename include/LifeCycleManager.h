@@ -174,7 +174,7 @@ private:
     ImagePool *             ipool;
 
     /**
-     *  Pointer to the Image Pool, to access images
+     *  Pointer to the SecurityGroup Pool
      */
     SecurityGroupPool *     sgpool;
 
