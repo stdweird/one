@@ -40,6 +40,7 @@
 #include "RequestManagerGroup.h"
 #include "RequestManagerVdc.h"
 #include "RequestManagerDatastore.h"
+#include "RequestManagerSecurityGroup.h"
 
 #include "RequestManagerSystem.h"
 #include "RequestManagerProxy.h"
@@ -460,6 +461,9 @@ void RequestManager::register_xml_methods()
     xmlrpc_c::methodPtr host_rename(new HostRename());
     xmlrpc_c::methodPtr secg_rename(new SecurityGroupRename());
 
+    // Security Group methods
+    xmlrpc_c::methodPtr secg_commit(new SecurityGroupCommit());
+
     /* VM related methods  */
     RequestManagerRegistry.addMethod("one.vm.deploy", vm_deploy);
     RequestManagerRegistry.addMethod("one.vm.action", vm_action);
@@ -788,6 +792,7 @@ void RequestManager::register_xml_methods()
     RequestManagerRegistry.addMethod("one.secgroup.chmod",   secg_chmod);
     RequestManagerRegistry.addMethod("one.secgroup.clone",   secg_clone);
     RequestManagerRegistry.addMethod("one.secgroup.rename",  secg_rename);
+    RequestManagerRegistry.addMethod("one.secgroup.commit",  secg_commit);
 
     RequestManagerRegistry.addMethod("one.secgrouppool.info",secgpool_info);
 

@@ -17,6 +17,15 @@
 require 'one_helper'
 
 class OneSecurityGroupHelper < OpenNebulaHelper::OneHelper
+    RECOVER = {
+        :name   => "recover",
+        :short  => "-r",
+        :large  => "--recover" ,
+        :description => "If set the commit operation will only operate on "\
+            "outdated and error VMs. This is intended for retrying updates of "\
+            "VMs or reinitialize the updating process if oned stopped or fail.",
+    }
+
     def self.rname
         "SECURITY_GROUP"
     end

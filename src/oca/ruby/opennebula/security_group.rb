@@ -32,7 +32,8 @@ module OpenNebula
             :chown       => "secgroup.chown",
             :chmod       => "secgroup.chmod",
             :clone       => "secgroup.clone",
-            :rename      => "secgroup.rename"
+            :rename      => "secgroup.rename",
+            :commit      => "secgroup.commit"
         }
 
         # Creates a SecurityGroup description with just its identifier
@@ -145,6 +146,18 @@ module OpenNebula
         #   otherwise
         def rename(name)
             return call(SECGROUP_METHODS[:rename], @pe_id, name)
+        end
+
+        # Commit SG changes to associated VMs
+        #
+        # @param recover [Bool] If true will only operate on outdated and error
+        # VMs. This is intended for retrying updates of VMs or reinitialize the
+        # updating process if oned stopped or fail.
+        #
+        # @return [nil, OpenNebula::Error] nil in case of success, Error
+        #   otherwise
+        def commit(recover)
+            return call(SECGROUP_METHODS[:commit], @pe_id, recover)
         end
 
         #######################################################################
