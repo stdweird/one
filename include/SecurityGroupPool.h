@@ -90,7 +90,10 @@ public:
      *    @param securitygroup pointer to SecurityGroup
      *    @return 0 on success
      */
-    int update(SecurityGroup * securitygroup);
+    int update(SecurityGroup * securitygroup)
+    {
+        return securitygroup->update(db);
+    }
 
     /**
      *  Bootstraps the database table(s) associated to the SecurityGroup pool
@@ -112,29 +115,28 @@ public:
      */
     int dump(ostringstream& oss, const string& where, const string& limit)
     {
-        return PoolSQL::dump(oss, "SECURITY_GROUP_POOL", SecurityGroup::table, where, limit);
+        return PoolSQL::dump(oss, "SECURITY_GROUP_POOL", SecurityGroup::table,
+                where, limit);
     };
 
     /**
-     *  Updates the VM sets of outdated and updating VMs during a SG update process
+     * Gets the the security group rules associated to a set of security groups
      *
+     * @param vm_id Virtual Machine id, if not -1 the VM is added to the sg
+     * @param sgs security group ID set
+     * @param rules Security Group rules will be added at the end of this vector
      */
-/**    void sg_update_vm(int sg_id, int vm_id, bool result)
-    {
-        SecurityGroup * sg = get (sg_id, true);
+    void get_security_group_rules(int vmid, set<int>& sgs,
+        vector<VectorAttribute*> &rules);
 
-        if (sg == 0)
-        {
-            return;
-        }
+    /**
+     * Removes the VM from the security groups
+     *
+     * @param id of Virtual Machine
+     * @param sgs security group ID set
+     */
+    void release_security_groups(int id, set<int>& sgs);
 
-        sg->update_vm(vm_id, result);
-
-        update(sg);
-
-        sg->unlock();
-    }
-*/
 private:
 
     /**

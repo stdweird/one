@@ -392,7 +392,7 @@ private:
      *    @param oid the virtual machine id.
      *    @param drv_msg xml data for the mad operation
      */
-    void update_sg (
+    void updatesg (
         const int     oid,
         const string& drv_msg) const
     {

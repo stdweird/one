@@ -1265,7 +1265,7 @@ public:
      *
      * @return 0 on success, -1 otherwise
      */
-    static int release_network_leases(VectorAttribute const * nic, int vmid);
+    static int release_network_leases(const VectorAttribute * nic, int vmid);
 
     /**
      *  Releases all disk images taken by this Virtual Machine
@@ -1309,6 +1309,12 @@ public:
      * @param sgs a set of security group IDs
      */
     void get_security_groups(set<int>& sgs) const;
+
+    /**
+     *  Remove the rules associated to the given security group rules
+     *    @param sgid the security group ID
+     */
+    void remove_security_group(int sgid);
 
     /**
      *
@@ -2034,25 +2040,6 @@ private:
      *  @return 0 if success
      */
     int get_network_leases(string &error_str);
-
-    /**
-     * Acquires the security groups of this NIC
-     *
-     * @param vm_id Virtual Machine oid
-     * @param sgs security group ID set
-     * @param rules Security Group rules will be added at the end of this vector
-     */
-    static void get_security_group_rules(int vm_id, set<int>& sgs,
-        vector<VectorAttribute*> &rules);
-
-    /**
-     * Releases the security groups of this NIC
-     *
-     * @param vm_id Virtual Machine oid
-     * @param nic NIC to release the security groups
-     * @return 0 on success, -1 otherwise
-     */
-    static void release_security_groups(int vm_id, const VectorAttribute * nic);
 
     /**
      * Returns a set of the security group IDs of this NIC

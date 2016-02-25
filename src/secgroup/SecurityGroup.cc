@@ -502,27 +502,3 @@ int SecurityGroup::post_update_template(string& error)
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
-/*
-void SecurityGroup::update_vm(int vm_id, bool result)
-{
-    int next_vm;
-
-    * TODO result == false ???
-     * if (!result)
-     * {
-     *   error_vms.add_collection(vm_id)
-     * }
-     *
-    updating.del_collection_id(vm_id);
-
-    if (outdated.first(next_vm) == -1)
-    {
-        return;
-    }
-
-    updating.add_collection_id(next_vm);
-    //TODO
-    //lcm->update_sg(next_vm);
-}
-*/
-

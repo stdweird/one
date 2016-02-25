@@ -134,10 +134,97 @@ error_name:
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int SecurityGroupPool::update(SecurityGroup * securitygroup)
+void SecurityGroupPool::get_security_group_rules(int vmid, set<int>& sgs,
+    vector<VectorAttribute*> &rules)
 {
-    return securitygroup->update(db);
+    set<int>::iterator sg_it;
+
+    SecurityGroup*     sg;
+
+    vector<VectorAttribute*>::iterator rule_it;
+    vector<VectorAttribute*> sg_rules;
+
+    int                 vnet_id;
+    VirtualNetwork*     vnet;
+    VirtualNetworkPool* vnet_pool = Nebula::instance().get_vnpool();
+
+    for (sg_it = sgs.begin(); sg_it != sgs.end(); sg_it++, sg_rules.clear())
+    {
+        sg = get(*sg_it, true);
+
+        if (sg == 0)
+        {
+            continue;
+        }
+
+        if ( vmid != -1 )
+        {
+            sg->add_vm(vmid);
+
+            update(sg);
+        }
+
+        sg->get_rules(sg_rules);
+
+        sg->unlock();
+
+        for (rule_it = sg_rules.begin(); rule_it != sg_rules.end(); rule_it++)
+        {
+            if ( (*rule_it)->vector_value("NETWORK_ID", vnet_id) != -1 )
+            {
+                vector<VectorAttribute*> vnet_rules;
+
+                VectorAttribute * rule = *rule_it;
+
+                vnet = vnet_pool->get(vnet_id, true);
+
+                if (vnet == 0)
+                {
+                    delete rule;
+                    continue;
+                }
+
+                vnet->process_security_rule(rule, vnet_rules);
+
+                delete rule;
+
+                rules.insert(rules.end(), vnet_rules.begin(), vnet_rules.end());
+
+                vnet->unlock();
+            }
+            else
+            {
+                rules.push_back(*rule_it);
+            }
+        }
+    }
 }
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
+
+void SecurityGroupPool::release_security_groups(int id, set<int>& sgs)
+{
+    set<int>::iterator it;
+    SecurityGroup *    sg;
+
+    for (it = sgs.begin(); it != sgs.end(); it++)
+    {
+        sg = get(*it, true);
+
+        if (sg == 0)
+        {
+            continue;
+        }
+
+        if ( id != -1 )
+        {
+            sg->del_vm(id);
+
+            update(sg);
+        }
+
+        sg->unlock();
+    }
+}
+

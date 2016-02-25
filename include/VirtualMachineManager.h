@@ -407,7 +407,7 @@ private:
      *
      * @param vid the id of the VM.
      */
-    void updatesg(int vid);
+    void updatesg_action(int vid);
 
     /**
      *  This function cancels the current driver operation

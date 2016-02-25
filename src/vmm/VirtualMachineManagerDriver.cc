@@ -581,8 +581,8 @@ void VirtualMachineManagerDriver::protocol(const string& message) const
     {
         int sg_id;
 
-        Nebula &ne = Nebula::instance();
-        SecurityGroupPool *sgpool = ne.get_secgrouppool();
+        //Nebula &ne = Nebula::instance();
+        //SecurityGroupPool *sgpool = ne.get_secgrouppool();
 
         is >> sg_id >> ws;
 
