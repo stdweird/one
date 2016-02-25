@@ -1570,7 +1570,6 @@ void  LifeCycleManager::updatesg_action(int sgid)
         VirtualMachine::LcmState lstate = vm->get_lcm_state();
         VirtualMachine::VmState  state  = vm->get_state();
 
-
         if ( state != VirtualMachine::ACTIVE ) //Update just VM information
         {
             is_tmpl = true;
@@ -1579,7 +1578,7 @@ void  LifeCycleManager::updatesg_action(int sgid)
         {
             switch (lstate)
             {
-                //Cannnot update these VMs SG rules being updated/created
+                //Cannnot update these VMs, SG rules being updated/created
                 case VirtualMachine::BOOT:
                 case VirtualMachine::BOOT_MIGRATE:
                 case VirtualMachine::BOOT_SUSPENDED:
@@ -1653,12 +1652,9 @@ void  LifeCycleManager::updatesg_action(int sgid)
 
         if ( is_tmpl || is_update )
         {
-            set<int> sgs;
             vector<VectorAttribute *> sg_rules;
 
-            sgs.insert(sgid);
-
-            sgpool->get_security_group_rules(-1, sgs, sg_rules);
+            sgpool->get_security_group_rules(-1, sgid, sg_rules);
 
             vm->remove_security_group(sgid);
 

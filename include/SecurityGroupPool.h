@@ -121,13 +121,25 @@ public:
 
     /**
      * Gets the the security group rules associated to a set of security groups
+     * Single SG and multiple SG version.
      *
      * @param vm_id Virtual Machine id, if not -1 the VM is added to the sg
      * @param sgs security group ID set
      * @param rules Security Group rules will be added at the end of this vector
      */
     void get_security_group_rules(int vmid, set<int>& sgs,
-        vector<VectorAttribute*> &rules);
+        vector<VectorAttribute*> &rules)
+    {
+        set<int>::iterator sg_it;
+
+        for (sg_it = sgs.begin(); sg_it != sgs.end(); ++sg_it)
+        {
+            get_security_group_rules(vmid, *sg_it, rules);
+        }
+
+    };
+
+    void get_security_group_rules(int vid, int sid, vector<VectorAttribute*> &rs);
 
     /**
      * Removes the VM from the security groups

@@ -2943,8 +2943,7 @@ int VirtualMachine::get_network_leases(string& estr)
     VirtualNetworkPool * vnpool = nd.get_vnpool();
     SecurityGroupPool*   sgpool = nd.get_secgrouppool();
 
-    vector<VectorAttribute*>            sg_rules;
-    vector<VectorAttribute*>::iterator  it;
+    vector<VectorAttribute*> sg_rules;
 
     set<int> vm_sgs;
 
@@ -2983,10 +2982,7 @@ int VirtualMachine::get_network_leases(string& estr)
 
     sgpool->get_security_group_rules(get_oid(), vm_sgs, sg_rules);
 
-    for(it = sg_rules.begin(); it != sg_rules.end(); it++ )
-    {
-        obj_template->set(*it);
-    }
+    obj_template->set(sg_rules);
 
     return 0;
 }

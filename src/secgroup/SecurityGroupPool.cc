@@ -134,68 +134,60 @@ error_name:
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-void SecurityGroupPool::get_security_group_rules(int vmid, set<int>& sgs,
+void SecurityGroupPool::get_security_group_rules(int vmid, int sgid,
     vector<VectorAttribute*> &rules)
 {
-    set<int>::iterator sg_it;
-
-    SecurityGroup*     sg;
-
     vector<VectorAttribute*>::iterator rule_it;
     vector<VectorAttribute*> sg_rules;
 
-    int                 vnet_id;
-    VirtualNetwork*     vnet;
+    int vnet_id;
     VirtualNetworkPool* vnet_pool = Nebula::instance().get_vnpool();
 
-    for (sg_it = sgs.begin(); sg_it != sgs.end(); sg_it++, sg_rules.clear())
+    SecurityGroup* sg = get(sgid, true);
+
+    if (sg == 0)
     {
-        sg = get(*sg_it, true);
+        return;
+    }
 
-        if (sg == 0)
+    if ( vmid != -1 )
+    {
+        sg->add_vm(vmid);
+
+        update(sg);
+    }
+
+    sg->get_rules(sg_rules);
+
+    sg->unlock();
+
+    for (rule_it = sg_rules.begin(); rule_it != sg_rules.end(); rule_it++)
+    {
+        if ( (*rule_it)->vector_value("NETWORK_ID", vnet_id) != -1 )
         {
-            continue;
-        }
+            vector<VectorAttribute*> vnet_rules;
 
-        if ( vmid != -1 )
-        {
-            sg->add_vm(vmid);
+            VectorAttribute* rule = *rule_it;
 
-            update(sg);
-        }
+            VirtualNetwork* vnet  = vnet_pool->get(vnet_id, true);
 
-        sg->get_rules(sg_rules);
-
-        sg->unlock();
-
-        for (rule_it = sg_rules.begin(); rule_it != sg_rules.end(); rule_it++)
-        {
-            if ( (*rule_it)->vector_value("NETWORK_ID", vnet_id) != -1 )
+            if (vnet == 0)
             {
-                vector<VectorAttribute*> vnet_rules;
-
-                VectorAttribute * rule = *rule_it;
-
-                vnet = vnet_pool->get(vnet_id, true);
-
-                if (vnet == 0)
-                {
-                    delete rule;
-                    continue;
-                }
-
-                vnet->process_security_rule(rule, vnet_rules);
-
                 delete rule;
-
-                rules.insert(rules.end(), vnet_rules.begin(), vnet_rules.end());
-
-                vnet->unlock();
+                continue;
             }
-            else
-            {
-                rules.push_back(*rule_it);
-            }
+
+            vnet->process_security_rule(rule, vnet_rules);
+
+            vnet->unlock();
+
+            delete rule;
+
+            rules.insert(rules.end(), vnet_rules.begin(), vnet_rules.end());
+        }
+        else
+        {
+            rules.push_back(*rule_it);
         }
     }
 }

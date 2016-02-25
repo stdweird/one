@@ -1268,6 +1268,18 @@ public:
     static int release_network_leases(const VectorAttribute * nic, int vmid);
 
     /**
+     * Returns a set of the security group IDs in use in this VM
+     * @param sgs a set of security group IDs
+     */
+    void get_security_groups(set<int>& sgs) const;
+
+    /**
+     *  Remove the rules associated to the given security group rules
+     *    @param sgid the security group ID
+     */
+    void remove_security_group(int sgid);
+
+    /**
      *  Releases all disk images taken by this Virtual Machine
      */
     void release_disk_images();
@@ -1305,19 +1317,9 @@ public:
     static string disk_tm_target(const VectorAttribute *  disk);
 
     /**
-     * Returns a set of the security group IDs in use in this VM
-     * @param sgs a set of security group IDs
-     */
-    void get_security_groups(set<int>& sgs) const;
-
-    /**
-     *  Remove the rules associated to the given security group rules
-     *    @param sgid the security group ID
-     */
-    void remove_security_group(int sgid);
-
-    /**
-     *
+     * Returns the DISK attribute for a disk
+     *   @param disk_id of the DISK
+     *   @return pointer to the attribute ir null if not found
      */
     const VectorAttribute* get_disk(int disk_id) const;
 
