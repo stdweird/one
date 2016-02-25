@@ -1532,7 +1532,6 @@ void  LifeCycleManager::updatesg_action(int sgid)
     VirtualMachine * vm;
 
     int  vmid;
-    bool end = false;
 
     SecurityGroup  * sg = sgpool->get(sgid, true);
 
@@ -1541,9 +1540,9 @@ void  LifeCycleManager::updatesg_action(int sgid)
         return;
     }
 
-    // ---------------------------------------------------------------------- //
-    // Find a VM with outdated SG rules at the host & trigger update          //
-    // ---------------------------------------------------------------------- //
+    // -------------------------------------------------------------------------
+    // Iterate over SG VMs, rules at hypervisor are updated one by one
+    // -------------------------------------------------------------------------
     do
     {
         bool is_error = false;
@@ -1650,6 +1649,9 @@ void  LifeCycleManager::updatesg_action(int sgid)
             }
         }
 
+        // ---------------------------------------------------------------------
+        // Update VM template with the new security group rules
+        // ---------------------------------------------------------------------
         if ( is_tmpl || is_update )
         {
             vector<VectorAttribute *> sg_rules;
@@ -1672,6 +1674,9 @@ void  LifeCycleManager::updatesg_action(int sgid)
             return;
         }
 
+        // ---------------------------------------------------------------------
+        // Update VM status in the security group
+        // ---------------------------------------------------------------------
         if ( is_error )
         {
             sg->add_error(vmid);
@@ -1682,14 +1687,21 @@ void  LifeCycleManager::updatesg_action(int sgid)
         }
         else if ( is_update )
         {
-            end = true;
-
             sg->add_updating(vmid);
-
-            vmm->trigger(VirtualMachineManager::UPDATESG, vmid);
-       }
+        }
 
         sgpool->update(sg);
 
-    } while (!end);
+        // ---------------------------------------------------------------------
+        // Trigger update at the host if needed and exit
+        // ---------------------------------------------------------------------
+        if (is_update)
+        {
+            sg->unlock();
+
+            vmm->trigger(VirtualMachineManager::UPDATESG, vmid);
+
+            return;
+        }
+    } while (true);
 }

@@ -42,7 +42,7 @@ class OneSecurityGroupHelper < OpenNebulaHelper::OneHelper
                 d["ID"]
             end
 
-            column :NAME, "Name of the Security Group", :left, :size=>27 do |d|
+            column :NAME, "Name of the Security Group", :left, :size=>20 do |d|
                 d["NAME"]
             end
 
@@ -55,7 +55,31 @@ class OneSecurityGroupHelper < OpenNebulaHelper::OneHelper
                 helper.group_name(d, options)
             end
 
-            default :ID, :USER, :GROUP, :NAME
+            column :UPDATED, "Number of VMs with updated rules", :size=>8 do |d|
+                if d["UPDATED_VMS"]["ID"].nil?
+                    "0"
+                else
+                    d["UPDATED_VMS"]["ID"].size
+                end
+            end
+
+            column :OUTDATED, "Number of VMs with outdated rules", :size=>8 do |d|
+                if d["OUTDATED_VMS"]["ID"].nil?
+                    "0"
+                else
+                    d["OUTDATED_VMS"]["ID"].size
+                end
+            end
+
+            column :ERROR, "Number of VMs that failed to update rules", :size=>8 do |d|
+                if d["ERROR_VMS"]["ID"].nil?
+                    "0"
+                else
+                    d["ERROR_VMS"]["ID"].size
+                end
+            end
+
+            default :ID, :USER, :GROUP, :NAME, :UPDATED, :OUTDATED, :ERROR
         end
 
         table
@@ -97,6 +121,16 @@ class OneSecurityGroupHelper < OpenNebulaHelper::OneHelper
 
             puts str % [e,  mask]
         }
+
+        puts
+
+        CLIHelper.print_header(str_h1 % "VIRTUAL MACHINES", false)
+
+        updated, outdated, error = secgroup.vm_ids
+
+        puts str % ["UPDATED", updated.join(',') ]
+        puts str % ["OUTDATED", outdated.join(',') ]
+        puts str % ["ERROR", error.join(',') ]
 
         puts
 

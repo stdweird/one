@@ -164,6 +164,34 @@ module OpenNebula
         # Helpers to get SecurityGroup information
         #######################################################################
 
+        # Returns three arrays with the numeric vm ids for vms updated,
+        # outdated (include updating) and error
+        def vm_ids
+            updated = Array.new
+
+            self.each("UPDATED_VMS/ID") do |id|
+                updated << id.text.to_i
+            end
+
+            outdated = Array.new
+
+            self.each("OUTDATED_VMS/ID") do |id|
+                outdated << id.text.to_i
+            end
+
+            self.each("UPDATING_VMS/ID") do |id|
+                outdated << id.text.to_i
+            end
+
+            error = Array.new
+
+            self.each("ERROR_VMS/ID") do |id|
+                error << id.text.to_i
+            end
+
+            return [updated, outdated, error]
+        end
+
         # Returns the group identifier
         # [return] _Integer_ the element's group ID
         def gid

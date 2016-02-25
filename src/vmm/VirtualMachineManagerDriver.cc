@@ -249,11 +249,20 @@ void VirtualMachineManagerDriver::protocol(const string& message) const
 
         is >> sgid >> ws;
 
+        if ( is.fail() )
+        {
+            NebulaLog::log("VMM", Log::ERROR, "Missing or wrong security group"
+                    " id in driver message");
+            return;
+        }
+
         SecurityGroupPool* sgpool = ne.get_secgrouppool();
         SecurityGroup*     sg     = sgpool->get(sgid, true);
 
         if ( sg != 0 )
         {
+            sg->del_updating(id);
+
             if ( result == "SUCCESS" )
             {
                 sg->add_vm(id);

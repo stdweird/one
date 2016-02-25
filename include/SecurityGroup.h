@@ -58,25 +58,38 @@ public:
     /* ---------------------------------------------------------------------- */
 
     /**
-     *  Adds a VM ID to the set.
+     *  Adds a VM ID to the security group (up-to-date set)
      *    @param vm_id The new id
      *
      *    @return 0 on success, -1 if the ID was already in the set
      */
     int add_vm(int vm_id)
     {
-        return vm_collection.add_collection_id(vm_id);
+        return updated.add_collection_id(vm_id);
     }
 
     /**
-     *  Deletes a VM ID from the set.
+     *  Deletes a VM ID from the security Group (any of the sets)
      *    @param vm_id The id
-     *
-     *    @return 0 on success, -1 if the ID was not in the set
      */
-    int del_vm(int vm_id)
+    void del_vm(int vm_id)
     {
-        return vm_collection.del_collection_id(vm_id);
+        if ( updated.del_collection_id(vm_id) == 0 )
+        {
+            return;
+        }
+
+        if ( updating.del_collection_id(vm_id) == 0 )
+        {
+            return;
+        }
+
+        if ( error.del_collection_id(vm_id) == 0 )
+        {
+            return;
+        }
+
+        outdated.del_collection_id(vm_id);
     }
 
     /**
@@ -85,13 +98,9 @@ public:
      */
     int get_vms() const
     {
-        return vm_collection.get_collection_size();
+        return updated.get_collection_size() + updating.get_collection_size()
+            + error.get_collection_size() + outdated.get_collection_size();
     }
-
-    /**
-     *  Updates the outdated and updating sets
-     */
-    //void update_vm(int vm_id, bool result);
 
     /**
      * Returns a group of Vector Attributes, in the form
@@ -113,8 +122,8 @@ public:
     {
         if (!recover)
         {
-            outdated << vm_collection;
-            vm_collection.clear_collection();
+            outdated << updated;
+            updated.clear_collection();
         }
 
         outdated << updating << error;
@@ -131,15 +140,21 @@ public:
         return outdated.first(id);
     }
 
-    void add_updating(int id)
+    int add_updating(int id)
     {
-        updating.add_collection_id(id);
+        return updating.add_collection_id(id);
     }
 
-    void add_error(int id)
+    int del_updating(int id)
     {
-        updating.add_collection_id(id);
+        return updating.del_collection_id(id);
     }
+
+    int add_error(int id)
+    {
+        return error.add_collection_id(id);
+    }
+
 private:
 
     // -------------------------------------------------------------------------
@@ -233,16 +248,15 @@ private:
     }
 
     /**
-     *  Stores a collection with the VMs using the security group
-     */
-    ObjectCollection vm_collection;
-
-    /**
-     *  These collections manages the update process of a Security Group
+     *  These collections stores the collection of VMs in the security
+     *  group and manages the update process of a Security Group
+     *    - updated VMs using the last version of the sg rules
      *    - outdated VMs with a previous version of the security group
      *    - updating VMs being updated, action sent to the drivers
      *    - error VMs that fail to update because of a wrong state or driver error
      */
+    ObjectCollection updated;
+
     ObjectCollection outdated;
 
     ObjectCollection updating;
