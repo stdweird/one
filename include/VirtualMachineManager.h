@@ -69,8 +69,7 @@ public:
         SNAPSHOT_REVERT,
         SNAPSHOT_DELETE,
         DISK_SNAPSHOT_CREATE,
-        DISK_SNAPSHOT_REVERT,
-        UPDATESG
+        DISK_SNAPSHOT_REVERT
     };
 
     /**
@@ -108,6 +107,15 @@ public:
      *   sudo application.
      */
     int load_mads(int uid);
+
+    /**
+     * Updates firewall rules of a VM
+     *   @param vid the id of the VM.
+     *   @param sgid the id of the security group
+     *
+     *   @return 0 on success
+     */
+    int updatesg(int vid, int sgid);
 
 private:
     /**
@@ -223,6 +231,7 @@ private:
      *    @param tm_command_rollback TM command in case of attach failure
      *    @param disk_target_path Path of the disk to attach, if any
      *    @param tmpl the VM information in XML
+     *    @param id of the security group
      */
     string * format_message(
         const string& hostname,
@@ -236,7 +245,8 @@ private:
         const string& tm_command,
         const string& tm_command_rollback,
         const string& disk_target_path,
-        const string& tmpl);
+        const string& tmpl,
+        int sgid);
 
     /**
      *  Function executed when a DEPLOY action is received. It deploys a VM on
@@ -401,13 +411,6 @@ private:
      * @param vid the id of the VM.
      */
     void disk_snapshot_revert_action(int vid);
-
-    /**
-     * Updates firewall rules of a VM
-     *
-     * @param vid the id of the VM.
-     */
-    void updatesg_action(int vid);
 
     /**
      *  This function cancels the current driver operation

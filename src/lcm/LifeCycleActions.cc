@@ -1699,7 +1699,7 @@ void  LifeCycleManager::updatesg_action(int sgid)
         {
             sg->unlock();
 
-            vmm->trigger(VirtualMachineManager::UPDATESG, vmid);
+            vmm->updatesg(vmid, sgid);
 
             return;
         }
