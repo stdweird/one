@@ -110,12 +110,12 @@ public:
 
     /**
      * Updates firewall rules of a VM
-     *   @param vid the id of the VM.
+     *   @param vm pointer to VM, needs to be locked
      *   @param sgid the id of the security group
      *
      *   @return 0 on success
      */
-    int updatesg(int vid, int sgid);
+    int updatesg(VirtualMachine * vm, int sgid);
 
 private:
     /**

@@ -124,6 +124,7 @@ class VmmAction
     #  - :fail_action steps to be executed if steps fail
     #  - :stdin for the action
     #  @param [Array] of steps
+    #  @param [String] additional informartion to prepend to action information
     def run(steps, extra_info = nil)
         result = execute_steps(steps)
 
@@ -131,8 +132,11 @@ class VmmAction
         @ssh_dst.close if @ssh_dst
 
         #Prepare the info for the OpenNebula core
-        #
-        info = extra_info || ""
+        if !extra_info.nil?
+            info = extra_info + " "
+        else
+            info = ""
+        end
 
         if DriverExecHelper.failed?(result)
             info << @data[:failed_info]
@@ -1103,8 +1107,8 @@ class ExecDriver < VirtualMachineDriver
             # Execute update networking action
             {
                 :driver       => :vnm,
-                :action       => :update,
-                :parameters   => [:deploy_id],
+                :action       => :update_sg,
+                :parameters   => [:deploy_id]
             }
         ]
 

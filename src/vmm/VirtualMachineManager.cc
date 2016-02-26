@@ -2522,35 +2522,23 @@ error_common:
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int VirtualMachineManager::updatesg(int vid, int sgid)
+int VirtualMachineManager::updatesg(VirtualMachine * vm, int sgid)
 {
-    VirtualMachine *                    vm;
-    const VirtualMachineManagerDriver * vmd;
+    string   vm_tmpl;
+    string * drv_msg;
 
-    string        vm_tmpl;
-    string *      drv_msg;
     ostringstream os;
-
-    // Get the VM from the pool
-    vm = vmpool->get(vid,true);
-
-    if (vm == 0)
-    {
-        return -1;
-    }
 
     if (!vm->hasHistory())
     {
-        vm->unlock();
         return -1;
     }
 
     // Get the driver for this VM
-    vmd = get(vm->get_vmm_mad());
+    const VirtualMachineManagerDriver * vmd = get(vm->get_vmm_mad());
 
     if ( vmd == 0 )
     {
-        vm->unlock();
         return -1;
     }
 
@@ -2570,11 +2558,9 @@ int VirtualMachineManager::updatesg(int vid, int sgid)
         vm->to_xml(vm_tmpl),
         sgid);
 
-    vmd->updatesg(vid, *drv_msg);
+    vmd->updatesg(vm->get_oid(), *drv_msg);
 
     delete drv_msg;
-
-    vm->unlock();
 
     return 0;
 }

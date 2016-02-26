@@ -1650,7 +1650,7 @@ void  LifeCycleManager::updatesg_action(int sgid)
         }
 
         // ---------------------------------------------------------------------
-        // Update VM template with the new security group rules
+        // Update VM template with the new security group rules & trigger update
         // ---------------------------------------------------------------------
         if ( is_tmpl || is_update )
         {
@@ -1665,6 +1665,11 @@ void  LifeCycleManager::updatesg_action(int sgid)
             vmpool->update(vm);
         }
 
+        if ( is_update )
+        {
+            vmm->updatesg(vm, sgid);
+        }
+
         vm->unlock();
 
         sg = sgpool->get(sgid, true);
@@ -1675,7 +1680,7 @@ void  LifeCycleManager::updatesg_action(int sgid)
         }
 
         // ---------------------------------------------------------------------
-        // Update VM status in the security group
+        // Update VM status in the security group and exit
         // ---------------------------------------------------------------------
         if ( is_error )
         {
@@ -1692,16 +1697,11 @@ void  LifeCycleManager::updatesg_action(int sgid)
 
         sgpool->update(sg);
 
-        // ---------------------------------------------------------------------
-        // Trigger update at the host if needed and exit
-        // ---------------------------------------------------------------------
         if (is_update)
         {
             sg->unlock();
-
-            vmm->updatesg(vmid, sgid);
-
             return;
         }
     } while (true);
 }
+

@@ -91,7 +91,7 @@ module VNMMAD
         end
 
         # Clean iptables rules and chains
-        def deactivate(do_all)
+        def deactivate(do_all=false)
             lock
 
             begin
