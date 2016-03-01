@@ -28,7 +28,9 @@ public:
     {
         Nebula& nd  = Nebula::instance();
         pool        = nd.get_secgrouppool();
+
         auth_object = PoolObjectSQL::SECGROUP;
+        auth_op     = AuthRequest::MANAGE;
     };
 
     ~SecurityGroupCommit(){};

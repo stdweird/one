@@ -41,7 +41,7 @@ public:
      *
      *    @return 0 on success, -1 if the ID was already in the set
      */
-    int add_collection_id(int id);
+    int add(int id);
 
     /**
      *  Deletes an ID from the set.
@@ -49,12 +49,12 @@ public:
      *
      *    @return 0 on success, -1 if the ID was not in the set
      */
-    int del_collection_id(int id);
+    int del(int id);
 
     /**
      *  Deletes all IDs from the set.
      */
-    void clear_collection()
+    void clear()
     {
         collection_set.clear();
     }
@@ -63,7 +63,7 @@ public:
      *  Returns how many IDs are there in the set.
      *    @return how many IDs are there in the set.
      */
-    int get_collection_size() const
+    int size() const
     {
         return collection_set.size();
     };
@@ -88,7 +88,7 @@ public:
     /**
      *  Returns a copy of the IDs set
      */
-    set<int> get_collection_copy()
+    set<int> clone()
     {
         return set<int> (collection_set);
     };
@@ -98,7 +98,7 @@ public:
      * @param id ID to search
      * @return true if the collection contains the given id
      */
-    bool collection_contains(int id)
+    bool contains(int id)
     {
         return collection_set.count(id) > 0;
     }
@@ -108,7 +108,7 @@ public:
      *    @param the element
      *    @return 0 on success -1 if the set was empty
      */
-    int first(int& elem);
+    int pop(int& elem);
 
     /**
      * Adds to the collection the contents of other collection

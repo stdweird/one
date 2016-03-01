@@ -65,7 +65,7 @@ public:
      */
     int add_vm(int vm_id)
     {
-        return updated.add_collection_id(vm_id);
+        return updated.add(vm_id);
     }
 
     /**
@@ -74,22 +74,22 @@ public:
      */
     void del_vm(int vm_id)
     {
-        if ( updated.del_collection_id(vm_id) == 0 )
+        if ( updated.del(vm_id) == 0 )
         {
             return;
         }
 
-        if ( updating.del_collection_id(vm_id) == 0 )
+        if ( updating.del(vm_id) == 0 )
         {
             return;
         }
 
-        if ( error.del_collection_id(vm_id) == 0 )
+        if ( error.del(vm_id) == 0 )
         {
             return;
         }
 
-        outdated.del_collection_id(vm_id);
+        outdated.del(vm_id);
     }
 
     /**
@@ -98,8 +98,7 @@ public:
      */
     int get_vms() const
     {
-        return updated.get_collection_size() + updating.get_collection_size()
-            + error.get_collection_size() + outdated.get_collection_size();
+        return updated.size() + updating.size() + error.size() + outdated.size();
     }
 
     /**
@@ -123,13 +122,13 @@ public:
         if (!recover)
         {
             outdated << updated;
-            updated.clear_collection();
+            updated.clear();
         }
 
         outdated << updating << error;
 
-        updating.clear_collection();
-        error.clear_collection();
+        updating.clear();
+        error.clear();
     };
 
     /**
@@ -137,22 +136,22 @@ public:
      */
     int get_outdated(int& id)
     {
-        return outdated.first(id);
+        return outdated.pop(id);
     }
 
     int add_updating(int id)
     {
-        return updating.add_collection_id(id);
+        return updating.add(id);
     }
 
     int del_updating(int id)
     {
-        return updating.del_collection_id(id);
+        return updating.del(id);
     }
 
     int add_error(int id)
     {
-        return error.add_collection_id(id);
+        return error.add(id);
     }
 
 private:

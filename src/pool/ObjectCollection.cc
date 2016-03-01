@@ -78,7 +78,7 @@ string& ObjectCollection::to_xml(string& xml) const
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int ObjectCollection::add_collection_id(int id)
+int ObjectCollection::add(int id)
 {
     pair<set<int>::iterator,bool> ret;
 
@@ -95,7 +95,7 @@ int ObjectCollection::add_collection_id(int id)
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int ObjectCollection::del_collection_id(int id)
+int ObjectCollection::del(int id)
 {
     if( collection_set.erase(id) != 1 )
     {
@@ -108,7 +108,7 @@ int ObjectCollection::del_collection_id(int id)
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int ObjectCollection::first(int& elem)
+int ObjectCollection::pop(int& elem)
 {
     if (collection_set.empty())
     {
