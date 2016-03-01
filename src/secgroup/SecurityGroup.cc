@@ -41,7 +41,7 @@ SecurityGroup::SecurityGroup(
         int             _umask,
         Template*       sgroup_template):
         PoolObjectSQL(-1, SECGROUP, "", _uid,_gid,_uname,_gname,table),
-        updated("UPDATED_VMS"),
+        updated("VMS"),
         outdated("OUTDATED_VMS"),
         updating("UPDATING_VMS"),
         error("ERROR_VMS")
@@ -273,7 +273,7 @@ int SecurityGroup::from_xml(const string& xml)
     ObjectXML::free_nodes(content);
     content.clear();
 
-    ObjectXML::get_nodes("/SECURITY_GROUP/UPDATED_VMS", content);
+    ObjectXML::get_nodes("/SECURITY_GROUP/VMS", content);
 
     if (content.empty())
     {
@@ -289,22 +289,18 @@ int SecurityGroup::from_xml(const string& xml)
 
     if (content.empty())
     {
-        return -1;
+        rc += outdated.from_xml_node(content[0]);
     }
-
-    rc += outdated.from_xml_node(content[0]);
 
     ObjectXML::free_nodes(content);
     content.clear();
 
     ObjectXML::get_nodes("/SECURITY_GROUP/UPDATING_VMS", content);
 
-    if (content.empty())
+    if (!content.empty())
     {
-        return -1;
+        rc += updating.from_xml_node(content[0]);
     }
-
-    rc += updating.from_xml_node(content[0]);
 
     ObjectXML::free_nodes(content);
     content.clear();
@@ -313,10 +309,8 @@ int SecurityGroup::from_xml(const string& xml)
 
     if (content.empty())
     {
-        return -1;
+        rc += error.from_xml_node(content[0]);
     }
-
-    rc += error.from_xml_node(content[0]);
 
     ObjectXML::free_nodes(content);
     content.clear();
