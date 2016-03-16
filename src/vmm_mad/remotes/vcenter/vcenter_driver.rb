@@ -2132,6 +2132,30 @@ private
         return vm_uuid
     end
 
+   ########################################################################
+    #  Clone a vCenter VM to a vCenter VM Template 
+    ########################################################################
+    def self.clone_vm_to_template(vm, new_template_name)
+
+        relocate_spec_params = {
+            :diskMoveType => :moveChildMostDiskBacking
+        }
+
+        clone_parameters = {
+            :location => relocate_spec_params,
+            :powerOn  => false,
+            :template => true,
+        }
+
+
+        template = vm.CloneVM_Task(:folder => vm.parent,
+                                   :name => new_template_name,
+                                   :spec => clone_parameters)
+
+
+        template.config.uuid
+    end
+
     ############################################################################
     # Attach disk to a VM
     # @params hostname[String] vcenter cluster name in opennebula as host
