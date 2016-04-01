@@ -475,6 +475,8 @@ void Nebula::start(bool bootstrap_only)
 
         vector<const VectorAttribute *> default_cost;
 
+        const VectorAttribute * vnc_conf;
+
         clpool  = new ClusterPool(db);
         docpool = new DocumentPool(db);
         zonepool= new ZonePool(db, is_federation_slave());
@@ -500,6 +502,8 @@ void Nebula::start(bool bootstrap_only)
         nebula_configuration->get("HOST_MONITORING_EXPIRATION_TIME",host_expiration);
 
         nebula_configuration->get("VM_SUBMIT_ON_HOLD",vm_submit_on_hold);
+
+        vnc_conf = nebula_configuration->get("VNC_PORTS");
 
         rc = nebula_configuration->get("DEFAULT_COST", default_cost);
 
@@ -544,7 +548,8 @@ void Nebula::start(bool bootstrap_only)
                                         vm_submit_on_hold,
                                         cpu_cost,
                                         mem_cost,
-                                        disk_cost);
+                                        disk_cost,
+                                        vnc_conf);
 
         hpool  = new HostPool(db,
                               host_hooks,

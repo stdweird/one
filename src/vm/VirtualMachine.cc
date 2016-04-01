@@ -1138,6 +1138,9 @@ int VirtualMachine::parse_graphics(string& error_str)
 
     vector<Attribute *>::iterator it;
 
+    Nebula& nd = Nebula::instance();
+    VirtualMachinePool * vmpool = nd.get_vmpool();
+
     int num = user_obj_template->remove("GRAPHICS", array_graphics);
 
     for (it=array_graphics.begin(); it != array_graphics.end(); it++)
@@ -1157,34 +1160,35 @@ int VirtualMachine::parse_graphics(string& error_str)
         return 0;
     }
 
-    string port = graphics->vector_value("PORT");
-    int    port_i;
-
-    int rc = graphics->vector_value("PORT", port_i);
-
-    if ( port.empty() )
+    if ( graphics->vector_value("PORT").empty() )
     {
-        Nebula&       nd = Nebula::instance();
+        int rc = vmpool->get_vnc_port();
 
-        ostringstream oss;
-        istringstream iss;
+        if ( rc == -1 )
+        {
+            error_str = "No free VNC ports found";
+            return -1;
+        }
 
-        int           base_port;
-        string        base_port_s;
-
-        int limit = 65535;
-
-        nd.get_configuration_attribute("VNC_BASE_PORT",base_port_s);
-        iss.str(base_port_s);
-        iss >> base_port;
-
-        oss << ( base_port + ( oid % (limit - base_port) ));
-        graphics->replace("PORT", oss.str());
+        graphics->replace("PORT", rc);
     }
-    else if ( rc == -1 || port_i < 0 )
+    else
     {
-        error_str = "Wrong PORT number in GRAPHICS attribute";
-        return -1;
+        unsigned int port;
+
+        int rc = graphics->vector_value("PORT", port);
+
+        if (rc == -1 || port > 65535 )
+        {
+            error_str = "Wrong PORT number in GRAPHICS attribute";
+            return -1;
+        }
+
+        if (vmpool->set_vnc_port(port) == -1)
+        {
+            error_str = "VNC PORT already in use";
+            return -1;
+        }
     }
 
     string random_passwd = graphics->vector_value("RANDOM_PASSWD");
