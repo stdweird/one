@@ -37,7 +37,7 @@ public:
      *  that MUST exists during the object lifetime.
      */
     BitMap(const VectorAttribute& bs_conf, int _id, const char * _db_table)
-        : id(_id), start_bit(0), db_table(_db_table)
+        : id(_id), start_bit(0), bs(0), db_table(_db_table)
     {
         std::string reserved;
 
@@ -144,6 +144,8 @@ public:
             if ( bs->test(hint) == false )
             {
                 bs->set(hint);
+
+                bit = hint;
                 return 0;
             }
         }
@@ -218,8 +220,6 @@ private:
     int id;
 
     unsigned int start_bit;
-
-    unsigned int size;
 
     std::set<int> reserved_bit;
 
