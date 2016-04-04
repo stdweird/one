@@ -26,7 +26,7 @@ using namespace std;
 class ClusterPool : public PoolSQL
 {
 public:
-    ClusterPool(SqlDB * db);
+    ClusterPool(SqlDB * db, const VectorAttribute * vnc_conf);
 
     ~ClusterPool(){};
 
@@ -67,9 +67,7 @@ public:
      *
      *    @return the oid assigned to the object, -1 in case of failure
      */
-    int allocate(string                   name,
-                 int *                    oid,
-                 string&                  error_str);
+    int allocate(string name, int * oid, string& error_str);
 
     /**
      *  Function to get a cluster from the pool, if the object is not in memory
@@ -128,7 +126,13 @@ public:
      */
     static int bootstrap(SqlDB * _db)
     {
-        return Cluster::bootstrap(_db);
+        ostringstream oss_bitmap;
+        int rc;
+
+        rc  = Cluster::bootstrap(_db);
+        rc += _db->exec(BitMap<0>::bootstrap(Cluster::bitmap_table, oss_bitmap));
+
+        return rc;
     };
 
     /**
@@ -157,12 +161,17 @@ public:
             PoolObjectSQL::ObjectType auth_object, const vector<int>& cids);
 private:
     /**
+     *  VNC configuration for clusters
+     */
+    const VectorAttribute vnc_conf;
+
+    /**
      *  Factory method to produce objects
      *    @return a pointer to the new object
      */
     PoolObjectSQL * create()
     {
-        return new Cluster(-1,"",0);
+        return new Cluster(-1,"",0, &vnc_conf);
     };
 };
 

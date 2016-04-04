@@ -18,7 +18,6 @@
 #define BITMAP_H_
 
 #include <bitset>
-#include <pthread.h>
 
 #include "Attribute.h"
 #include "Callbackable.h"
@@ -37,37 +36,35 @@ public:
      *  Creates a new bitmap, it stores a pointer to the DB parameters
      *  that MUST exists during the object lifetime.
      */
-    BitMap(const VectorAttribute * bs_conf, int _id, SqlDB * _db,
-            const char * _db_table)
-        : id(_id), start_bit(0), db(_db), db_table(_db_table)
+    BitMap(const VectorAttribute& bs_conf, int _id, const char * _db_table)
+        : id(_id), start_bit(0), db_table(_db_table)
     {
         std::string reserved;
 
-        bs_conf->vector_value("START", start_bit);
-        bs_conf->vector_value("RESERVED", reserved);
+        bs_conf.vector_value("START", start_bit);
+        bs_conf.vector_value("RESERVED", reserved);
 
         if (!reserved.empty())
         {
             one_util::split_unique(reserved, ',', reserved_bit);
         }
-
-        pthread_mutex_init(&mutex, 0);
     };
 
     virtual ~BitMap()
     {
         delete bs;
-
-        pthread_mutex_destroy(&mutex);
     };
 
+    /* ---------------------------------------------------------------------- */
+    /* Database interface                                                     */
+    /* ---------------------------------------------------------------------- */
     /**
      * Returns a string stream with the SQL bootstrap command for the
      * bitmap table
      */
-    static std::ostringstream& bootstrap(const char * table, std::ostringstream& o)
+    static std::ostringstream& bootstrap(const char * t, std::ostringstream& o)
     {
-        o << "CREATE TABLE IF NOT EXISTS " << table
+        o << "CREATE TABLE IF NOT EXISTS " << t
           << " (id INTEGER, map LONGTEXT, PRIMARY KEY(id))";
 
         return o;
@@ -77,28 +74,32 @@ public:
      *  Insert a new bitmap into the bitmap table. The bitmap marks the
      *  associated reserved bits as initialized by the bitmap conf. This
      *  function is called once to bootstrap the bitmap contents.
+     *    @param id of the set, this will update the id of the bitmap
      *    @return 0 on success
      */
-    int insert()
+    int insert(int _id, SqlDB * db)
     {
+        id = _id;
+
         init("");
 
-        return insert_replace(db, true);
+        return insert_replace(db, false);
     }
 
     /**
      *  Loads a bitmap and marks (again) the reserved bits. This function
      *  is called once to load the bitmap from the DB. The reserved bits are
      *  updated.
+     *    @param id of the set, this will update the id of the bitmap
      *    @return 0 on success
      */
-    int select()
+    int select(int _id, SqlDB * db)
     {
         std::string * uzbs;
 
-        int rc = select(db, &uzbs);
+        id = _id;
 
-        if ( rc != 0 )
+        if ( select(db, &uzbs) != 0 )
         {
             return -1;
         }
@@ -110,6 +111,26 @@ public:
         return 0;
     }
 
+    int update(SqlDB * db)
+    {
+        return insert_replace(db, true);
+    }
+
+    /**
+     *  Deletes a bitmap from the DB.
+     *    @return 0 on success
+     */
+    int drop(SqlDB * db)
+    {
+        std::ostringstream oss;
+        oss << "DELETE FROM " << db_table << " WHERE id = " << id ;
+
+        return db->exec(oss);
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* BitMap interface                                                       */
+    /* ---------------------------------------------------------------------- */
     /*+
      *  Gets the first 0 bit in the map and set it.
      *    @return the bit number or -1 in case of error
@@ -118,8 +139,6 @@ public:
     {
         int rc;
 
-        pthread_mutex_lock(&mutex);
-
         for (unsigned int i = start_bit; ; ++i)
         {
             try
@@ -127,8 +146,6 @@ public:
                 if ( bs->test(i) == false )
                 {
                     bs->set(i);
-
-                    insert_replace(db, false);
 
                     rc = (int) i;
 
@@ -142,8 +159,6 @@ public:
             }
         }
 
-        pthread_mutex_unlock(&mutex);
-
         return rc;
     }
 
@@ -153,17 +168,11 @@ public:
      */
     void reset(int bit)
     {
-        pthread_mutex_lock(&mutex);
-
         try
         {
             bs->reset(bit);
-
-            insert_replace(db, false);
         }
         catch(const std::out_of_range& oor){};
-
-        pthread_mutex_unlock(&mutex);
     }
 
     /**
@@ -175,29 +184,21 @@ public:
     {
         int rc = -1;
 
-        pthread_mutex_lock(&mutex);
-
         try
         {
             if (bs->test(bit) == false)
             {
                 bs->set(bit);
 
-                insert_replace(db, false);
-
                 rc = 0;
             }
         }
         catch(const std::out_of_range& oor){};
 
-        pthread_mutex_unlock(&mutex);
-
         return rc;
     }
 
 private:
-    pthread_mutex_t mutex;
-
     /* ---------------------------------------------------------------------- */
     /* Bitmap configuration attributes                                        */
     /* ---------------------------------------------------------------------- */
@@ -235,8 +236,6 @@ private:
     /* ---------------------------------------------------------------------- */
     /* Database implementation                                                */
     /* ---------------------------------------------------------------------- */
-    SqlDB      * db;
-
     const char * db_table;
 
     /**
@@ -298,18 +297,6 @@ private:
         return rc;
     }
 
-    /**
-     *  Deletes a bitmap from the DB.
-     *    @return 0 on success
-     */
-    int drop(SqlDB * db)
-    {
-        std::ostringstream oss;
-        oss << "DELETE FROM " << db_table << " WHERE id = " << id ;
-
-        return db->exec(oss);
-
-    }
 
     /**
      *  Insert a Bitmap in the DB, the bitmap is stored in a compressed (zlib)

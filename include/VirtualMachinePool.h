@@ -19,12 +19,10 @@
 
 #include "PoolSQL.h"
 #include "VirtualMachine.h"
-#include "BitMap.h"
 
 #include <time.h>
 
 using namespace std;
-
 
 /**
  *  The Virtual Machine Pool class. ...
@@ -42,8 +40,7 @@ public:
                        bool                         on_hold,
                        float                        default_cpu_cost,
                        float                        default_mem_cost,
-                       float                        default_disk_cost,
-                       const VectorAttribute *      vnc_conf);
+                       float                        default_disk_cost);
 
     ~VirtualMachinePool(){};
 
@@ -172,24 +169,6 @@ public:
     };
 
     //--------------------------------------------------------------------------
-    // VNC Port management function
-    //--------------------------------------------------------------------------
-    int get_vnc_port()
-    {
-        return vnc_bitmap.get();
-    }
-
-    void free_vnc_port(int port)
-    {
-        vnc_bitmap.reset(port);
-    }
-
-    int set_vnc_port(int port)
-    {
-        return vnc_bitmap.set(port);
-    }
-
-    //--------------------------------------------------------------------------
     // Virtual Machine DB access functions
     //--------------------------------------------------------------------------
 
@@ -255,11 +234,9 @@ public:
     {
         int rc;
         ostringstream oss_import(import_db_bootstrap);
-        ostringstream oss_bitmap;
 
         rc  = VirtualMachine::bootstrap(_db);
         rc += _db->exec(oss_import);
-        rc += _db->exec(BitMap<0>::bootstrap(bitmap_table, oss_bitmap));
 
         return rc;
     };
@@ -446,20 +423,12 @@ private:
 
     static const char * import_db_bootstrap;
 
-    static const char * bitmap_table;
     /**
      * Insert deploy_id - vmid index.
      *   @param replace will replace and not insert
      *   @return 0 on success
      */
     int insert_index(const string& deploy_id, int vm_id, bool replace);
-
-    // -------------------------------------------------------------------------
-    // VNC ports bitmap
-    // -------------------------------------------------------------------------
-    static const unsigned int VNC_BITMAP_ID;
-
-    BitMap<65536> vnc_bitmap;
 
     // -------------------------------------------------------------------------
 

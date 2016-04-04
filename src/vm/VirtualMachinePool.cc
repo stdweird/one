@@ -33,10 +33,6 @@ const char * VirtualMachinePool::import_db_bootstrap =
     "CREATE TABLE IF NOT EXISTS vm_import "
     "(deploy_id VARCHAR(128), vmid INTEGER, PRIMARY KEY(deploy_id))";
 
-const char * VirtualMachinePool::bitmap_table = "vm_bitmap";
-
-const unsigned int VirtualMachinePool::VNC_BITMAP_ID = 0;
-
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
@@ -50,13 +46,11 @@ VirtualMachinePool::VirtualMachinePool(
         bool                        on_hold,
         float                       default_cpu_cost,
         float                       default_mem_cost,
-        float                       default_disk_cost,
-        const VectorAttribute *     vnc_conf)
+        float                       default_disk_cost)
     : PoolSQL(db, VirtualMachine::table, true, false),
     _monitor_expiration(expire_time), _submit_on_hold(on_hold),
     _default_cpu_cost(default_cpu_cost), _default_mem_cost(default_mem_cost),
-    _default_disk_cost(default_disk_cost), vnc_bitmap(vnc_conf, VNC_BITMAP_ID,
-    db, bitmap_table)
+    _default_disk_cost(default_disk_cost)
 {
 
     string name;
@@ -68,11 +62,6 @@ VirtualMachinePool::VirtualMachinePool(
     if ( _monitor_expiration == 0 )
     {
         clean_all_monitoring();
-    }
-
-    if ( vnc_bitmap.select() == -1 )
-    {
-        vnc_bitmap.insert();
     }
 
     for (unsigned int i = 0 ; i < hook_mads.size() ; i++ )

@@ -1160,19 +1160,7 @@ int VirtualMachine::parse_graphics(string& error_str)
         return 0;
     }
 
-    if ( graphics->vector_value("PORT").empty() )
-    {
-        int rc = vmpool->get_vnc_port();
-
-        if ( rc == -1 )
-        {
-            error_str = "No free VNC ports found";
-            return -1;
-        }
-
-        graphics->replace("PORT", rc);
-    }
-    else
+    if ( !graphics->vector_value("PORT").empty() )
     {
         unsigned int port;
 
@@ -1181,12 +1169,6 @@ int VirtualMachine::parse_graphics(string& error_str)
         if (rc == -1 || port > 65535 )
         {
             error_str = "Wrong PORT number in GRAPHICS attribute";
-            return -1;
-        }
-
-        if (vmpool->set_vnc_port(port) == -1)
-        {
-            error_str = "VNC PORT already in use";
             return -1;
         }
     }
