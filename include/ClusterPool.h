@@ -58,7 +58,10 @@ public:
     /* Cluster Resources                                                      */
     /* ---------------------------------------------------------------------- */
     /**
-     *  Get a free VNC port in the cluster
+     *  Get a free VNC port in the cluster. It will try first base_port + id
+     *   @param oid of the cluster
+     *   @param vm_id of the ID requesting the port
+     *   @param port to free
      */
     int get_vnc_port(int oid, int vm_id, unsigned int& port)
     {
@@ -79,7 +82,9 @@ public:
     };
 
     /**
-     * Release a previously allocated VNC port
+     * Release a previously allocated VNC port in the cluster
+     *   @param oid of the cluster
+     *   @param port to free
      */
     void release_vnc_port(int oid, unsigned int port)
     {
@@ -96,7 +101,11 @@ public:
     }
 
     /**
-     * Release a previously allocated VNC port
+     * Mark a VNC port as in-use in the cluster.
+     *   @param oid of the cluster
+     *   @param port to set
+     *
+     *   @return 0 on success, -1 if the port was in-use.
      */
     int set_vnc_port(int oid, unsigned int port)
     {

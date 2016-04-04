@@ -3560,68 +3560,6 @@ void VirtualMachine::disk_extended_info(int uid,
     }
 }
 
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-bool VirtualMachine::volatile_disk_extended_info(Template *tmpl)
-{
-    int  num;
-    vector<VectorAttribute  * > disks;
-    DatastorePool * ds_pool = Nebula::instance().get_dspool();
-
-    bool found = false;
-
-    num = tmpl->get("DISK", disks);
-
-    for(int i=0; i<num; i++)
-    {
-        if ( !is_volatile(disks[i]) )
-        {
-            continue;
-        }
-
-        found = true;
-
-        if (hasHistory())
-        {
-            ds_pool->disk_attribute(get_ds_id(), disks[i]);
-        }
-    }
-
-    return found;
-}
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-int VirtualMachine::vnc_port()
-{
-    ClusterPool * cpool = Nebula::instance().get_clpool();
-
-    VectorAttribute * graphics = obj_template->get("GRAPHICS");
-
-    unsigned int port;
-    int rc;
-
-    if (graphics == 0 )
-    {
-        return 0;
-    }
-    else if (graphics->vector_value("PORT", port) == 0)
-    {
-        rc = cpool->set_vnc_port(get_cid(), port);
-    }
-    {
-        rc = cpool->get_vnc_port(get_cid(), get_oid(), port);
-
-        if ( rc == 0 )
-        {
-            graphics->replace("PORT", port);
-        }
-    }
-
-    return rc;
-}
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */

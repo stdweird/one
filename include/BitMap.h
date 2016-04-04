@@ -183,7 +183,7 @@ public:
     /**
      *  Sets a bit in the map and updates DB.
      *    @param bit to set
-     *    @return 0 on success
+     *    @return 0 on success, -1 if bit was set
      */
     int set(int bit)
     {

@@ -654,6 +654,111 @@ void VirtualMachineAction::request_execute(xmlrpc_c::paramList const& paramList,
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
+/**
+ *  Adds extra info to the volatile disks of the given template, ds inherited
+ *  attributes and TYPE
+ *    @param ds_id datastore id
+ *    @param vd vector of DISKS
+ *    @return true if there at least one volatile disk was found
+ */
+static bool set_volatile_disk_info(int ds_id, vector<VectorAttribute *>& vd)
+{
+    DatastorePool * ds_pool = Nebula::instance().get_dspool();
+
+    bool found = false;
+
+    for(vector<VectorAttribute *>::iterator it = vd.begin(); it!=vd.end(); ++it)
+    {
+        if ( !VirtualMachine::is_volatile(*it) )
+        {
+            continue;
+        }
+
+        ds_pool->disk_attribute(ds_id, *it);
+
+        found = true;
+    }
+
+    return found;
+}
+
+static bool set_volatile_disk_info(VirtualMachine *vm)
+{
+    if ( !vm->hasHistory() )
+    {
+        return false;
+    }
+
+    vector<VectorAttribute *> disks;
+
+    int ds_id = vm->get_ds_id();
+
+    vm->get_template_attribute("DISK", disks);
+
+    return set_volatile_disk_info(ds_id, disks);
+}
+
+
+static bool set_volatile_disk_info(VirtualMachine *vm, Template& tmpl)
+{
+    if ( !vm->hasHistory() )
+    {
+        return false;
+    }
+
+    vector<VectorAttribute *> disks;
+
+    int ds_id = vm->get_ds_id();
+
+    tmpl.get("DISK", disks);
+
+    return set_volatile_disk_info(ds_id, disks);
+}
+
+/* -------------------------------------------------------------------------- */
+
+int set_vnc_port(VirtualMachine *vm, RequestAttributes& att)
+{
+    ClusterPool * cpool = Nebula::instance().get_clpool();
+
+    VectorAttribute * graphics = vm->get_template_attribute("GRAPHICS");
+
+    unsigned int port;
+    int rc;
+
+    if (graphics == 0 || !vm->hasHistory())
+    {
+        return 0;
+    }
+    else if (graphics->vector_value("PORT", port) == 0)
+    {
+        rc = cpool->set_vnc_port(vm->get_cid(), port);
+
+        if ( rc != 0 )
+        {
+            att.resp_msg = "Requested VNC port already assgined to a VM";
+        }
+    }
+    else
+    {
+        rc = cpool->get_vnc_port(vm->get_cid(), vm->get_oid(), port);
+
+        if ( rc == 0 )
+        {
+            graphics->replace("PORT", port);
+        }
+        else
+        {
+            att.resp_msg = "No free VNC ports available in the cluster";
+        }
+    }
+
+    return rc;
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
 void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
                                            RequestAttributes& att)
 {
@@ -861,13 +966,11 @@ void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
     //   - volatile disk (selected system DS driver)
     //   - vnc port (free in the selected cluster)
     // ------------------------------------------------------------------------
-    vm->volatile_disk_extended_info();
+    set_volatile_disk_info(vm);
 
-    if (vm->vnc_port() != 0)
+    if (set_vnc_port(vm, att) != 0)
     {
-        att.resp_msg = "Cannot assign a VNC PORT";
         failure_response(ACTION, att);
-
         vm->unlock();
         return;
     }
@@ -1197,7 +1300,7 @@ void VirtualMachineMigrate::request_execute(xmlrpc_c::paramList const& paramList
         return;
     }
 
-    vm->volatile_disk_extended_info();
+    set_volatile_disk_info(vm);
 
     // ------------------------------------------------------------------------
     // Migrate the VM
@@ -1589,9 +1692,10 @@ void VirtualMachineAttach::request_execute(xmlrpc_c::paramList const& paramList,
 
     vm->get_permissions(vm_perms);
 
-    volatile_disk = vm->volatile_disk_extended_info(&tmpl);
+    volatile_disk = set_volatile_disk_info(vm, tmpl);
 
-    if (vm->is_vrouter() && !VirtualRouter::is_action_supported(History::DISK_ATTACH_ACTION))
+    if (vm->is_vrouter() &&
+            !VirtualRouter::is_action_supported(History::DISK_ATTACH_ACTION))
     {
         att.resp_msg = "Action is not supported for virtual router VMs";
         failure_response(ACTION, att);
