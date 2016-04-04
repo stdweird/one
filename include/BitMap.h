@@ -133,33 +133,38 @@ public:
     /* ---------------------------------------------------------------------- */
     /*+
      *  Gets the first 0 bit in the map and set it.
-     *    @return the bit number or -1 in case of error
+     *    @param hint try this bit first, 0 does not use any hint
+     *    @param bit the bit number reserved
+     *    @return -1 in case of error
      */
-    int get()
+    int get(unsigned int hint, unsigned int& bit)
     {
-        int rc;
+        if ( hint != 0 )
+        {
+            if ( bs->test(hint) == false )
+            {
+                bs->set(hint);
+                return 0;
+            }
+        }
 
-        for (unsigned int i = start_bit; ; ++i)
+        for (bit = start_bit; ; ++bit)
         {
             try
             {
-                if ( bs->test(i) == false )
+                if ( bs->test(bit) == false )
                 {
-                    bs->set(i);
-
-                    rc = (int) i;
-
-                    break;
+                    bs->set(bit);
+                    return 0;
                 }
             }
             catch (const std::out_of_range& oor)
             {
-                rc = -1;
-                break;
+                return -1;
             }
         }
 
-        return rc;
+        return -1;
     }
 
     /**
@@ -196,6 +201,14 @@ public:
         catch(const std::out_of_range& oor){};
 
         return rc;
+    }
+
+    /**
+     *  Return the start_bit of the bitmap
+     */
+    unsigned int get_start_bit()
+    {
+        return start_bit;
     }
 
 private:

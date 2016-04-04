@@ -1133,32 +1133,18 @@ int VirtualMachine::parse_pci(string& error_str)
 
 int VirtualMachine::parse_graphics(string& error_str)
 {
-    vector<Attribute *> array_graphics;
-    VectorAttribute *   graphics;
+    VectorAttribute * user_graphics = user_obj_template->get("GRAPHICS");
 
-    vector<Attribute *>::iterator it;
-
-    Nebula& nd = Nebula::instance();
-    VirtualMachinePool * vmpool = nd.get_vmpool();
-
-    int num = user_obj_template->remove("GRAPHICS", array_graphics);
-
-    for (it=array_graphics.begin(); it != array_graphics.end(); it++)
-    {
-        obj_template->set(*it);
-    }
-
-    if ( num == 0 )
+    if ( user_graphics == 0 )
     {
         return 0;
     }
 
-    graphics = dynamic_cast<VectorAttribute * >(array_graphics[0]);
+    VectorAttribute * graphics = new VectorAttribute(user_graphics);
 
-    if ( graphics == 0 )
-    {
-        return 0;
-    }
+    user_obj_template->erase("GRAPHICS");
+
+    obj_template->set(graphics);
 
     if ( !graphics->vector_value("PORT").empty() )
     {
@@ -3603,6 +3589,38 @@ bool VirtualMachine::volatile_disk_extended_info(Template *tmpl)
     }
 
     return found;
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+int VirtualMachine::vnc_port()
+{
+    ClusterPool * cpool = Nebula::instance().get_clpool();
+
+    VectorAttribute * graphics = obj_template->get("GRAPHICS");
+
+    unsigned int port;
+    int rc;
+
+    if (graphics == 0 )
+    {
+        return 0;
+    }
+    else if (graphics->vector_value("PORT", port) == 0)
+    {
+        rc = cpool->set_vnc_port(get_cid(), port);
+    }
+    {
+        rc = cpool->get_vnc_port(get_cid(), get_oid(), port);
+
+        if ( rc == 0 )
+        {
+            graphics->replace("PORT", port);
+        }
+    }
+
+    return rc;
 }
 
 /* -------------------------------------------------------------------------- */

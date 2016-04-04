@@ -55,6 +55,68 @@ public:
     static const int DEFAULT_CLUSTER_ID;
 
     /* ---------------------------------------------------------------------- */
+    /* Cluster Resources                                                      */
+    /* ---------------------------------------------------------------------- */
+    /**
+     *  Get a free VNC port in the cluster
+     */
+    int get_vnc_port(int oid, int vm_id, unsigned int& port)
+    {
+        int rc = -1;
+
+        Cluster * cluster = get(oid, true);
+
+        if ( cluster != 0 )
+        {
+          rc = cluster->get_vnc_port(vm_id, port);
+
+          update(cluster);
+
+          cluster->unlock();
+        }
+
+        return rc;
+    };
+
+    /**
+     * Release a previously allocated VNC port
+     */
+    void release_vnc_port(int oid, unsigned int port)
+    {
+        Cluster * cluster = get(oid, true);
+
+        if ( cluster != 0 )
+        {
+            cluster->release_vnc_port(port);
+
+            update(cluster);
+
+            cluster->unlock();
+        }
+    }
+
+    /**
+     * Release a previously allocated VNC port
+     */
+    int set_vnc_port(int oid, unsigned int port)
+    {
+        int rc = -1;
+
+        Cluster * cluster = get(oid, true);
+
+        if ( cluster != 0 )
+        {
+            rc = cluster->set_vnc_port(port);
+
+            update(cluster);
+
+            cluster->unlock();
+        }
+
+        return rc;
+    }
+
+    /* ---------------------------------------------------------------------- */
     /* Methods for DB management                                              */
     /* ---------------------------------------------------------------------- */
 

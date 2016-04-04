@@ -446,15 +446,13 @@ int RequestManagerVirtualMachine::add_history(VirtualMachine * vm,
                                        RequestAttributes& att)
 {
     string  vmdir;
-    int     rc;
 
     VirtualMachinePool * vmpool = static_cast<VirtualMachinePool *>(pool);
 
-    vm->add_history(hid, cid, hostname, vmm_mad, vnm_mad, tm_mad, ds_location, ds_id);
+    vm->add_history(hid, cid, hostname, vmm_mad, vnm_mad, tm_mad, ds_location,
+            ds_id);
 
-    rc = vmpool->update_history(vm);
-
-    if ( rc != 0 )
+    if ( vmpool->update_history(vm) != 0 )
     {
         att.resp_msg = "Cannot update virtual machine history";
         failure_response(INTERNAL, att);
@@ -462,7 +460,13 @@ int RequestManagerVirtualMachine::add_history(VirtualMachine * vm,
         return -1;
     }
 
-    vmpool->update(vm);
+    if ( vmpool->update(vm) != 0 )
+    {
+        att.resp_msg = "Cannot update virtual machine";
+        failure_response(INTERNAL, att);
+
+        return -1;
+    }
 
     return 0;
 }
@@ -743,7 +747,7 @@ void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
             set<int> ds_cluster_ids;
             bool     ds_migr;
 
-            if (get_ds_information(ds_id, ds_cluster_ids, tm_mad, att, ds_migr) != 0)
+            if (get_ds_information(ds_id,ds_cluster_ids,tm_mad,att,ds_migr) != 0)
             {
                 return;
             }
@@ -752,10 +756,11 @@ void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
             {
                 ostringstream oss;
 
-                oss << object_name(PoolObjectSQL::DATASTORE) << " [" << ds_id << "] and "
-                    << object_name(PoolObjectSQL::HOST) << " [" << hid
-                    << "] are not in the same "
-                    << object_name(PoolObjectSQL::CLUSTER) << " [" << cluster_id << "].";
+                oss << object_name(PoolObjectSQL::DATASTORE) << " [" << ds_id
+                    << "] and " << object_name(PoolObjectSQL::HOST) << " ["
+                    << hid << "] are not in the same "
+                    << object_name(PoolObjectSQL::CLUSTER) << " [" << cluster_id
+                    << "].";
 
                 att.resp_msg = oss.str();
 
@@ -806,7 +811,6 @@ void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
     // - VM States are right
     // - Host capacity if required
     // ------------------------------------------------------------------------
-
     if ((vm = get_vm(id, att)) == 0)
     {
         return;
@@ -817,7 +821,9 @@ void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
         vm->get_state() != VirtualMachine::STOPPED &&
         vm->get_state() != VirtualMachine::UNDEPLOYED)
     {
-        att.resp_msg = "Deploy action is not available for state " +  vm->state_str();
+        att.resp_msg = "Deploy action is not available for state " +
+            vm->state_str();
+
         failure_response(ACTION, att);
 
         vm->unlock();
@@ -833,9 +839,8 @@ void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
     }
 
     // ------------------------------------------------------------------------
-    // Add a new history record and update volatile DISK info
+    // Add a new history record
     // ------------------------------------------------------------------------
-
     if (add_history(vm,
                     hid,
                     cluster_id,
@@ -851,7 +856,21 @@ void VirtualMachineDeploy::request_execute(xmlrpc_c::paramList const& paramList,
         return;
     }
 
+    // ------------------------------------------------------------------------
+    // Add deployment dependent attributes to VM
+    //   - volatile disk (selected system DS driver)
+    //   - vnc port (free in the selected cluster)
+    // ------------------------------------------------------------------------
     vm->volatile_disk_extended_info();
+
+    if (vm->vnc_port() != 0)
+    {
+        att.resp_msg = "Cannot assign a VNC PORT";
+        failure_response(ACTION, att);
+
+        vm->unlock();
+        return;
+    }
 
     // ------------------------------------------------------------------------
     // deploy the VM

@@ -177,12 +177,24 @@ public:
     // *************************************************************************
     // VNC Port management function
     // *************************************************************************
-    int get_vnc_port()
+
+    /**
+     *  Returns a free VNC port, it will try first to allocate base_port + vmid.
+     *  If this port is not free the first lower port from the VNC_PORT/START
+     *  port is returned.
+     *    @param vmid of the VM
+     *    @param port reserved
+     *    @return 0 on success
+     */
+    int get_vnc_port(int vmid, unsigned int& port)
     {
-        return vnc_bitmap.get();
+        unsigned int base_port = vnc_bitmap.get_start_bit();
+        unsigned int hint_port = base_port + (vmid % (65535 - base_port));
+
+        return vnc_bitmap.get(hint_port,port);
     }
 
-    void free_vnc_port(int port)
+    void release_vnc_port(int port)
     {
         vnc_bitmap.reset(port);
     }
