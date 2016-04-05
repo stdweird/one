@@ -695,7 +695,14 @@ static bool set_volatile_disk_info(VirtualMachine *vm)
 
     vm->get_template_attribute("DISK", disks);
 
-    return set_volatile_disk_info(ds_id, disks);
+    bool found = set_volatile_disk_info(ds_id, disks);
+
+    if ( found )
+    {
+        Nebula::instance().get_vmpool()->update(vm);
+    }
+
+    return found;
 }
 
 
@@ -712,7 +719,14 @@ static bool set_volatile_disk_info(VirtualMachine *vm, Template& tmpl)
 
     tmpl.get("DISK", disks);
 
-    return set_volatile_disk_info(ds_id, disks);
+    bool found = set_volatile_disk_info(ds_id, disks);
+
+    if ( found )
+    {
+        Nebula::instance().get_vmpool()->update(vm);
+    }
+
+    return found;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -746,6 +760,8 @@ int set_vnc_port(VirtualMachine *vm, RequestAttributes& att)
         if ( rc == 0 )
         {
             graphics->replace("PORT", port);
+
+            Nebula::instance().get_vmpool()->update(vm);
         }
         else
         {
