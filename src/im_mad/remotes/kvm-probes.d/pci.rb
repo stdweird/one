@@ -84,6 +84,15 @@ def pval(name, value)
     %Q(  #{name} = "#{value}")
 end
 
+# vendor / device => incr value per different bus
+rename = {
+  '15b3' => { # Mellanox
+    '1014' => '1000', # connectx4 VF
+  }
+}
+
+count = {}
+
 devices.each do |dev|
     next if !CONF[:short_address].empty? && !CONF[:short_address].include?(dev[:short_address])
 
@@ -95,12 +104,36 @@ devices.each do |dev|
         next if matched != true
     end
 
+    type = dev[:type]
+    device = dev[:device]
+    vendor = dev[:vendor]
+    if rename.key?(vendor) and rename[vendor].key?(device)
+      if not count.key?(vendor)
+        count[vendor] = {}
+      end
+      if not count[vendor].key?(device)
+        count[vendor][device] = {}
+      end
+
+      # keep track of devices per bus
+      bus = dev[:bus]
+      if count[vendor][device].key?(bus)
+        device = count[vendor][device][bus]
+      else
+        deviceint = device.hex + rename[vendor][device].hex * count[vendor][device].length
+        newdevice = "%04x" % deviceint
+        count[vendor][device][bus] = newdevice
+        device = newdevice
+      end
+      type = [dev[:vendor], device, dev[:class]].join(':')
+    end
+
     puts "PCI = ["
     values = [
-        pval('TYPE', dev[:type]),
+        pval('TYPE', type),
         pval('VENDOR', dev[:vendor]),
         pval('VENDOR_NAME', dev[:vendor_name]),
-        pval('DEVICE', dev[:device]),
+        pval('DEVICE', device),
         pval('DEVICE_NAME', dev[:device_name]),
         pval('CLASS', dev[:class]),
         pval('CLASS_NAME', dev[:class_name]),
