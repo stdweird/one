@@ -87,6 +87,9 @@ end
 # vendor / device => incr value per different bus
 rename = {
   '15b3' => { # Mellanox
+    '1003' => '1000', # connectx3
+    '1004' => '1000', # connectx3 VF
+    '1013' => '1000', # connectx4
     '1014' => '1000', # connectx4 VF
   }
 }
