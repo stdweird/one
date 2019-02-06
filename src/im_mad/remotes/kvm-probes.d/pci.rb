@@ -91,7 +91,14 @@ rename = {
     '1004' => '1000', # connectx3 VF
     '1013' => '1000', # connectx4
     '1014' => '1000', # connectx4 VF
-  }
+  },
+  '14e4' => { # Broadcom
+    '16c1' => '1000', # bnxt_en VF
+  },
+}
+
+markslot = {
+  '16c1' => 1,
 }
 
 count = {}
@@ -119,13 +126,17 @@ devices.each do |dev|
       end
 
       # keep track of devices per bus
-      bus = dev[:bus]
-      if count[vendor][device].key?(bus)
-        device = count[vendor][device][bus]
+      mark = dev[:bus]
+      if markslot.key?(device)
+        # keep track of devices per bus and slot
+        mark += dev[:slot]
+      end
+      if count[vendor][device].key?(mark)
+        device = count[vendor][device][mark]
       else
         deviceint = device.hex + rename[vendor][device].hex * count[vendor][device].length
         newdevice = "%04x" % deviceint
-        count[vendor][device][bus] = newdevice
+        count[vendor][device][mark] = newdevice
         device = newdevice
       end
       type = [dev[:vendor], device, dev[:class]].join(':')
